@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    :root {
+      --ink: #14213d; --muted: #667085; --line: #e4e7ec; --bg: #f6f7fb;
+      --brand: #1f3a8a; --brand-soft: #e8edff; --ok: #12805c; --ok-soft: #e6f6ef;
+      --warn: #b54708; --err: #c0262d; --err-soft: #fdecec; --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      font-size: 15px; line-height: 1.55; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 32px 18px 80px; }
+    .brand { font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--brand); text-transform: uppercase; }
+    h1 { font-size: 26px; margin: 6px 0 6px; letter-spacing: -.02em; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 14px; }
+    label { font-weight: 600; display: block; margin-bottom: 8px; }
+    input[type=email], textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+      font: inherit; color: inherit; background: #fff; }
+    input[type=email]:focus, textarea:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
+    textarea { min-height: 140px; resize: vertical; font-size: 13px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 10px; padding: 11px 16px;
+      font: inherit; font-weight: 600; cursor: pointer; background: var(--brand); color: #fff; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn.ghost { background: #fff; color: var(--brand); border: 1px solid var(--line); }
+    .btn.small { padding: 7px 12px; font-size: 13px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .who { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .who b { font-size: 16px; }
+    .bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 16px 0 4px; }
+    .bar span { height: 6px; border-radius: 6px; background: var(--line); }
+    .bar span.on { background: var(--brand); }
+    .bar span.ok { background: var(--ok); }
+    .step.locked { opacity: .55; }
+    .step-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .step h2 { font-size: 19px; margin: 0 0 2px; }
+    .badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+    .badge.lock { background: #f2f4f7; color: var(--muted); }
+    .badge.now { background: var(--brand-soft); color: var(--brand); }
+    .badge.done { background: var(--ok-soft); color: var(--ok); }
+    ol.how { margin: 12px 0 14px; padding-left: 20px; color: #344054; }
+    ol.how li { margin: 3px 0; }
+    code { background: #f2f4f7; padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+    .drop { border: 1.5px dashed #c5cbe0; border-radius: 12px; padding: 18px; text-align: center; background: #fafbff;
+      cursor: pointer; margin-top: 12px; }
+    .drop.over { border-color: var(--brand); background: var(--brand-soft); }
+    .drop .fname { font-weight: 600; margin-top: 4px; word-break: break-all; }
+    .saved { background: var(--ok-soft); color: #0b5c42; border-radius: 10px; padding: 10px 12px; margin-top: 12px; font-size: 14px; word-break: break-all; }
+    .errbox { background: var(--err-soft); color: #8a1c21; border: 1px solid #f5c2c4; border-radius: 10px; padding: 12px 14px;
+      margin-top: 12px; font-size: 14px; white-space: pre-wrap; word-break: break-all; }
+    .errbox b { display: block; margin-bottom: 4px; }
+    .finish { background: linear-gradient(135deg, #1f3a8a, #3851b8); color: #fff; border: 0; }
+    .finish h2 { margin: 0 0 6px; }
+    .linkish { background: none; border: 0; color: var(--brand); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; padding: 0; }
+    #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: 92vw; padding: 12px 18px;
+      border-radius: 12px; background: var(--ink); color: #fff; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
+    #toast.show { opacity: 1; }
+    #toast.err { background: var(--err); }
+    #busy { position: fixed; inset: 0; background: rgba(255,255,255,.6); display: none; align-items: center; justify-content: center; z-index: 20; }
+    #busy.show { display: flex; }
+    .spin { width: 34px; height: 34px; border: 3px solid var(--brand-soft); border-top-color: var(--brand); border-radius: 50%; animation: s 0.8s linear infinite; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    .modal { position: fixed; inset: 0; background: rgba(16,24,40,.45); display: none; align-items: center; justify-content: center; z-index: 25; padding: 16px; }
+    .modal.show { display: flex; }
+    .modal .card { width: 100%; max-width: 680px; margin: 0; }
+    .modal textarea { min-height: 300px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand" id="brand"></div>
+  <h1><?= appTitle ?></h1>
+  <p class="sub" id="sub"></p>
+
+  <!-- 입장 -->
+  <section id="login" class="card">
+    <label for="email">이메일 주소</label>
+    <form id="loginForm" class="row" onsubmit="return false;">
+      <input type="email" id="email" placeholder="name@company.com" autocomplete="off" required style="flex:1;min-width:220px">
+      <button class="btn" id="enterBtn" type="submit">시작하기</button>
+    </form>
+    <p class="hint" style="margin:10px 0 0">같은 이메일로 다시 들어오면 하던 단계부터 이어서 할 수 있어요.</p>
+  </section>
+
+  <!-- 진행 화면 -->
+  <section id="dash" hidden>
+    <div class="card">
+      <div class="who">
+        <div>
+          <div class="hint">입장한 이메일</div>
+          <b id="whoEmail"></b> <span class="hint" id="whoCompany"></span>
+        </div>
+        <button class="btn ghost small" id="logoutBtn" type="button">다른 이메일로 들어가기</button>
+      </div>
+      <div class="bar" id="bar"></div>
+      <div class="hint" id="barText"></div>
+    </div>
+    <div id="steps"></div>
+  </section>
+</div>
+
+<div id="busy"><div class="spin"></div></div>
+<div id="toast"></div>
+
+<!-- 다운로드가 안 될 때 내용 복사 -->
+<div class="modal" id="copyModal">
+  <div class="card">
+    <h2 style="margin:0 0 6px;font-size:18px" id="copyTitle">내용 복사하기</h2>
+    <p class="hint" style="margin:0 0 10px">아래 내용을 전체 복사해서 메모장에 붙여 넣고 <code id="copyName"></code> 이름으로 저장하거나, 필요한 곳에 그대로 붙여 넣어도 돼요.</p>
+    <textarea id="copyText" readonly></textarea>
+    <div class="row" style="margin-top:10px;justify-content:flex-end">
+      <button class="btn ghost" type="button" id="copyBtn">전체 복사</button>
+      <button class="btn" type="button" id="closeModal">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CFG = <?!= cfgJson ?>;
+  const STEPS = <?!= stepsJson ?>;
+  let state = null;
+  const picked = {};      // key -> { name, text }
+  const reopen = {};      // key -> 다시 올리기 열림 여부
+  const lastFile = {};    // key -> { fileName, content } (글 파일만)
+  const uploadErr = {};   // key -> 업로드 거절 사유
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function call(fn) {
+    const args = Array.prototype.slice.call(arguments, 1);
+    return new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null, args);
+    });
+  }
+  function busy(on) { $('busy').classList.toggle('show', !!on); }
+  let toastTimer = null;
+  function toast(msg, isErr) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'show' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ''; }, isErr ? 6000 : 3800);
+  }
+  const errMsg = e => (e && e.message ? e.message : String(e)).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, '');
+
+  /* 입장 */
+  async function enter(email) {
+    busy(true);
+    try {
+      state = await call('enter', email);
+      $('login').hidden = true;
+      $('dash').hidden = false;
+      render();
+    } catch (e) {
+      toast(errMsg(e), true);
+    } finally { busy(false); }
+  }
+  $('loginForm').addEventListener('submit', () => {
+    const v = $('email').value.trim();
+    if (!v) { toast('이메일 주소를 입력해 주세요.', true); return; }
+    enter(v);
+  });
+  $('logoutBtn').addEventListener('click', () => {
+    state = null;
+    $('dash').hidden = true; $('login').hidden = false; $('email').value = ''; $('email').focus();
+  });
+
+  /* 화면 그리기 */
+  function render() {
+    $('whoEmail').textContent = state.email;
+    $('whoCompany').textContent = state.company ? '· ' + state.company + (state.name ? ' ' + state.name : '') : '';
+    const doneCount = state.steps.filter(s => s.done).length;
+    $('bar').innerHTML = state.steps.map(s => '<span class="' + (s.done ? 'ok' : (s.unlocked ? 'on' : '')) + '"></span>').join('');
+    $('barText').textContent = state.finished ? '모든 단계를 마쳤어요.' : STEPS.length + '단계 중 ' + doneCount + '단계 완료';
+
+    let html = '';
+    STEPS.forEach((cfg, i) => {
+      const s = state.steps[i];
+      html += stepCard(cfg, s, i);
+    });
+    if (state.finished) {
+      html += '<div class="card finish"><h2>수고하셨어요!</h2>' +
+        '<div>모든 단계를 마쳤어요. 받은 파일은 필요할 때 언제든 이 화면에서 다시 내려받을 수 있어요.</div></div>';
+    }
+    $('steps').innerHTML = html;
+    bindStepEvents();
+  }
+
+  function stepCard(cfg, s, i) {
+    const prev = STEPS[i - 1];
+    let badge = '<span class="badge lock">잠김</span>';
+    if (s.done) badge = '<span class="badge done">완료</span>';
+    else if (s.unlocked) badge = '<span class="badge now">지금 할 차례</span>';
+
+    let body = '';
+    if (!s.unlocked) {
+      body = '<p class="hint" style="margin:10px 0 0">' + esc(prev.title) + ' 결과를 업로드하면 열려요.</p>';
+    } else {
+      const how = [];
+      how.push('아래 버튼으로 ' + esc(CFG.itemNoun) + '를 내려받아요.');
+      if (i > 0) how.push('필요하면 ' + esc(prev.title) + ' 결과 파일도 함께 준비해 주세요.');
+      if (cfg.upload) {
+        how.push('마친 뒤 결과 파일' + (cfg.resultHint ? '(예: <code>' + esc(cfg.resultHint) + '</code>)' : '') + '을 아래에 올려요. 올리면 다음 단계가 열려요.');
+      } else {
+        how.push('이 단계는 업로드가 없어요.');
+      }
+      body += '<ol class="how">' + how.map(h => '<li>' + h + '</li>').join('') + '</ol>';
+      body += '<div class="row"><button class="btn" type="button" data-dl="' + cfg.key + '">' + esc(CFG.itemNoun) + ' 다운로드</button>';
+      if (s.downloadedAt) body += '<span class="hint">최근 다운로드 ' + esc(s.downloadedAt) + '</span>';
+      if (lastFile[cfg.key]) body += '<button class="linkish" type="button" data-copy="' + cfg.key + '">다운로드가 안 됐나요? 내용 복사하기</button>';
+      body += '</div>';
+
+      if (cfg.upload) {
+        if (s.done) {
+          body += '<div class="saved">결과 업로드 완료 · ' + esc(s.uploadedAt) + (s.uploadedName ? '<br><span class="hint">' + esc(s.uploadedName) + '</span>' : '') + '</div>';
+        }
+        if (!s.done || reopen[cfg.key]) {
+          body += uploadBox(cfg, s);
+        } else {
+          body += '<div style="margin-top:8px"><button class="linkish" type="button" data-reopen="' + cfg.key + '">결과를 고쳐서 다시 올리기</button></div>';
+        }
+      }
+    }
+
+    return '<div class="card step' + (s.unlocked ? '' : ' locked') + '" id="step-' + cfg.key + '">' +
+      '<div class="step-head"><div><h2>' + esc(cfg.title) + '</h2><div class="hint">' + esc(cfg.desc) + '</div></div>' + badge + '</div>' +
+      body + '</div>';
+  }
+
+  function uploadBox(cfg, s) {
+    const p = picked[cfg.key];
+    return '<div class="drop" data-drop="' + cfg.key + '">' +
+      '<div><b>결과 파일을 끌어다 놓거나 눌러서 선택</b></div>' +
+      '<div class="hint">' + (CFG.check === 'none' ? '어떤 파일이든 올릴 수 있어요' : '.md 또는 .txt 결과 파일') + '</div>' +
+      (p && p.name ? '<div class="fname">' + esc(p.name) + '</div>' : '') +
+      '<input type="file" data-file="' + cfg.key + '" hidden>' +
+      '</div>' +
+      '<details style="margin-top:10px"' + (p && p.pasted ? ' open' : '') + '><summary class="hint" style="cursor:pointer">파일이 없으면 결과 내용을 붙여 넣기</summary>' +
+      '<textarea data-paste="' + cfg.key + '" placeholder="결과 내용을 그대로 붙여 넣어 주세요.">' + (p && p.pasted ? esc(p.text) : '') + '</textarea></details>' +
+      (uploadErr[cfg.key] ? '<div class="errbox"><b>업로드할 수 없어요</b>' + esc(uploadErr[cfg.key]) + '</div>' : '') +
+      '<div class="row" style="margin-top:12px"><button class="btn" type="button" data-up="' + cfg.key + '">결과 업로드</button>' +
+      (s.done ? '<button class="btn ghost" type="button" data-cancel="' + cfg.key + '">취소</button>' : '') + '</div>';
+  }
+
+  function bindStepEvents() {
+    document.querySelectorAll('[data-dl]').forEach(b => b.addEventListener('click', () => download(b.dataset.dl)));
+    document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => openCopy(b.dataset.copy)));
+    document.querySelectorAll('[data-up]').forEach(b => b.addEventListener('click', () => upload(b.dataset.up)));
+    document.querySelectorAll('[data-reopen]').forEach(b => b.addEventListener('click', () => { reopen[b.dataset.reopen] = true; render(); }));
+    document.querySelectorAll('[data-cancel]').forEach(b => b.addEventListener('click', () => { reopen[b.dataset.cancel] = false; delete picked[b.dataset.cancel]; render(); }));
+    document.querySelectorAll('[data-paste]').forEach(t => t.addEventListener('input', () => {
+      picked[t.dataset.paste] = { name: '', text: t.value, pasted: true };
+      delete uploadErr[t.dataset.paste];
+    }));
+    document.querySelectorAll('[data-drop]').forEach(zone => {
+      const key = zone.dataset.drop;
+      const input = zone.querySelector('input[type=file]');
+      zone.addEventListener('click', () => input.click());
+      input.addEventListener('change', () => input.files[0] && pickFile(key, input.files[0]));
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('over');
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) pickFile(key, f);
+      });
+    });
+  }
+
+  /* 글 파일 읽기: UTF-8 / UTF-16 / 한글 윈도 메모장 기본(ANSI, CP949)을 자동으로 구분한다 */
+  function readBuf(file) {
+    if (file.arrayBuffer) return file.arrayBuffer();
+    return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsArrayBuffer(file); });
+  }
+  async function readText(file) {
+    const u8 = new Uint8Array(await readBuf(file));
+    if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder('utf-8').decode(u8.subarray(3));
+    if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder('utf-16le').decode(u8.subarray(2));
+    if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder('utf-16be').decode(u8.subarray(2));
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(u8); } catch (e) { /* UTF-8이 아님 */ }
+    try { return new TextDecoder('euc-kr').decode(u8); } catch (e) { /* 지원 안 함 */ }
+    return new TextDecoder('utf-8').decode(u8);
+  }
+
+  const TEXT_EXT = /\.(md|markdown|txt|csv|tsv|json|html?|xml|ya?ml)$/i;
+  function readB64(file) {
+    return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(file); });
+  }
+  async function pickFile(key, file) {
+    if (file.size > CFG.maxMb * 1024 * 1024) { toast(CFG.maxMb + 'MB보다 큰 파일은 올릴 수 없어요.', true); return; }
+    try {
+      const isText = TEXT_EXT.test(file.name) || /^text\//.test(file.type || '');
+      if (isText) {
+        const text = await readText(file);
+        picked[key] = { name: file.name, text: text, pasted: false };
+      } else {
+        const b64 = await readB64(file);
+        picked[key] = { name: file.name, text: '', b64: b64, mime: file.type || 'application/octet-stream', pasted: false };
+      }
+      delete uploadErr[key];
+      render();
+    } catch (e) { toast('파일을 읽지 못했어요. 다시 선택해 주세요.', true); }
+  }
+
+  function saveAs(name, b64, mime) {
+    const bin = atob(b64); const u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const blob = new Blob([u8], { type: mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  }
+
+  async function download(key) {
+    busy(true);
+    try {
+      const r = await call('downloadFile', state.email, key);
+      if (r.text) lastFile[key] = { fileName: r.fileName, content: r.text };
+      saveAs(r.fileName, r.base64, r.mimeType);
+      state = r.state;
+      render();
+      toast(r.fileName + ' 다운로드를 시작했어요.');
+    } catch (e) {
+      toast(errMsg(e), true);
+    } finally { busy(false); }
+  }
+
+  async function upload(key) {
+    const cfg = STEPS.filter(s => s.key === key)[0];
+    const p = picked[key];
+    const text = p ? String(p.text || '') : '';
+    if (!p || (!p.b64 && !text.trim())) { toast('파일을 선택하거나 내용을 붙여 넣어 주세요.', true); return; }
+    busy(true);
+    try {
+      const r = await call('uploadResult', state.email, key, p.name || '', text, p.b64 || '', p.mime || '');
+      state = r.state;
+      delete picked[key];
+      delete uploadErr[key];
+      reopen[key] = false;
+      render();
+      const next = STEPS[cfg.no];
+      toast('저장했어요.' + (next ? ' ' + next.title + '이(가) 열렸어요.' : ''));
+      if (next) {
+        const el = document.getElementById('step-' + next.key);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch (e) {
+      uploadErr[key] = errMsg(e);
+      render();
+      const box = document.querySelector('#step-' + key + ' .errbox');
+      if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast('업로드할 수 없어요. 안내를 확인해 주세요.', true);
+    } finally { busy(false); }
+  }
+
+  function openCopy(key) {
+    const g = lastFile[key];
+    if (!g) return;
+    $('copyName').textContent = g.fileName;
+    $('copyText').value = g.content;
+    $('copyModal').classList.add('show');
+    setTimeout(() => { $('copyText').focus(); $('copyText').select(); }, 50);
+  }
+  $('closeModal').addEventListener('click', () => $('copyModal').classList.remove('show'));
+  $('copyBtn').addEventListener('click', () => {
+    const t = $('copyText'); t.focus(); t.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    toast(ok ? '복사했어요.' : 'Ctrl+C(맥은 Cmd+C)로 복사해 주세요.', !ok);
+  });
+
+  /* 입장할 때마다 이메일 칸은 빈칸으로 시작 */
+  (function init() {
+    $('brand').textContent = CFG.brand || '';
+    $('brand').hidden = !CFG.brand;
+    $('sub').textContent = STEPS.map(s => s.title).join(' → ') + ' 순서로 진행해요. ' + (CFG.subtitle || '');
+    $('copyTitle').textContent = CFG.itemNoun + ' 내용 복사하기';
+    $('email').value = '';
+    $('email').focus();
+  })();
+</script>
+</body>
+</html>
