@@ -56,3 +56,19 @@ skills/apps-script-staged-gate/
 node skills/apps-script-staged-gate/scripts/check.mjs Code.gs                 # 설정 점검
 node skills/apps-script-staged-gate/scripts/check.mjs Code.gs step1 result.md # 샘플 결과 파싱 미리 보기
 ```
+
+## 질문지 (questionnaires/)
+
+웹앱 단계별로 나눠 주는 AI 채팅용 질문지입니다. ChatGPT, Claude, Gemini 대화창에 파일을 첨부해 보내기만 하면 바로 시작합니다.
+
+| 순서 | 파일 | 내용 |
+|---|---|---|
+| 1 | `maetel-icp-grill.md` | 자사 정의와 ICP(타깃 고객 기준) 정리 → `{회사명}_메텔ICP결과자료_{timestamp}.md` |
+| 2 | `maetel-target-grill.md` | ICP 결과를 받아 실제로 만나야 할 고객 3명 정리 |
+| 3 | `maetel-profile-grill.md` | 링크드인 프로필(헤드라인, 소개글, 배너) 만들기 |
+| 4 | `maetel-tone-grill.md` | 글쓰기 톤매너 키트 만들기 |
+
+모든 질문지는 같은 답변 방식을 씁니다.
+- 질문마다 추천 답이 붙고, 답은 `1️⃣ 예  2️⃣ 아니오 (직접 입력)` 두 가지로 받습니다.
+- 아니오를 고르면 새 추천 없이 바로 직접 입력을 받고, 입력한 내용은 형식만 다듬어 다시 확인받습니다.
+- 버튼(선택지 위젯)은 쓰지 않고, 질문과 추천 답을 본문 글로 보여 줍니다.
