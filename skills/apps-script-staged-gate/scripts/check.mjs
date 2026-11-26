@@ -26,6 +26,8 @@ const errors = [];
 const warns = [];
 
 if (!Array.isArray(STEPS) || STEPS.length < 1) errors.push('STEPS가 비어 있어요.');
+if (!String(CONFIG.PARENT_FOLDER_ID || '').trim()) errors.push('CONFIG.PARENT_FOLDER_ID가 비어 있어요. 산출물은 이 상위 폴더 아래 날짜 폴더에 모여요.');
+if (/^\d{4}-?\d{2}-?\d{2}/.test(CONFIG.ROOT_FOLDER_NAME || '')) warns.push('ROOT_FOLDER_NAME에 날짜를 넣지 마세요. setup()이 앞에 YYYY-MM-DD_를 붙여요.');
 const seen = (arr, label) => {
   const dup = arr.filter((v, i) => arr.indexOf(v) !== i);
   if (dup.length) errors.push(`${label} 중복: ${[...new Set(dup)].join(', ')}`);
@@ -54,6 +56,7 @@ if (mode === 'required') STEPS.filter(s => s.upload && !s.requiredItems.length).
 
 console.log(`단계 ${STEPS.length}개: ` + STEPS.map(s => `${s.no}.${s.title}${s.upload ? '' : '(업로드 없음)'}`).join(' → '));
 console.log(`업로드 검사: ${mode}, 최대 ${CONFIG.UPLOAD.MAX_MB}MB`);
+console.log(`저장 위치: 폴더 ${CONFIG.PARENT_FOLDER_ID || '(없음)'} 아래 'YYYY-MM-DD_${CONFIG.ROOT_FOLDER_NAME}'`);
 warns.forEach(w => console.log('⚠️ ' + w));
 errors.forEach(e => console.log('❌ ' + e));
 if (!errors.length) console.log('✅ 설정 점검 통과');
