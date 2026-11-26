@@ -8,6 +8,18 @@ description: "Build, deploy, and update a Google Apps Script web app where parti
 참가자: 이메일 입장 → ① 파일 다운로드 → 결과 업로드 → ② 열림 → … → 마지막 단계(보통 다운로드만).
 저장: Drive `02_참가자결과/<이메일>/`에 원본, Sheet에 진행현황·단계별 결과(항목별 열)·응답상세(세로형)·활동로그.
 
+## 폴더 규칙 (필수)
+
+새로 만드는 웹앱과 교육 자료는 **무조건** 상위 폴더 아래 **날짜 폴더 하나**에 모은다. 내 드라이브 루트나 다른 폴더에 만들지 않는다.
+
+- 상위 폴더: `CONFIG.PARENT_FOLDER_ID` (기본값 `1RJjj_dUbUSQXuETgA74ZZ1IA4SNX5vii` = maetel 공유 드라이브 `메텔 Grill 교육`). 다른 조직이 쓸 때는 자기 폴더 ID로 바꾼다.
+- 날짜 폴더 이름: `YYYY-MM-DD_<이름>` (만든 날, 한국 시간). 예: `2026-11-15_Grill 질문지 웹앱`, `2026-11-26_리드결과_3차`.
+  - 웹앱은 `setup()`이 `<상위>/YYYY-MM-DD_<ROOT_FOLDER_NAME>/`를 만들고 그 안에 `01_배포파일`, `02_참가자결과`, 결과 시트를 만든 뒤 스크립트 파일(또는 스크립트가 붙은 시트)도 옮긴다. `ROOT_FOLDER_NAME`에는 날짜를 넣지 않는다.
+  - 에이전트가 Drive API로 직접 만드는 것(스크립트 프로젝트, 시트, 문서, 업로드 파일)은 먼저 날짜 폴더를 만들고(있으면 재사용) `parents: [날짜 폴더 ID]`, `supportsAllDrives=true`로 만든다.
+  - 같은 교육의 후속 자료(리드 결과, 통합 시트, 검토 웹앱, 계획서 등)도 상위 폴더 바로 아래에 그날 날짜 폴더를 만들어 넣는다. 그 자료에서 만든 웹앱은 원본 자료의 날짜 폴더에 함께 둔다.
+- 상위 폴더 바로 아래에는 날짜 폴더만 둔다. 날짜 없는 폴더나 파일이 보이면 만든 날(createdTime, 한국 시간) 기준 날짜 폴더로 옮기거나 이름 앞에 날짜를 붙인다.
+- 옮겨도 Drive ID는 그대로라 운영 중인 웹앱(스크립트 속성에 ID 저장)은 계속 동작한다. 옮긴 뒤 웹앱 주소가 열리는지만 확인한다.
+
 ## 파일
 
 - `assets/Code.gs` — 서버. **맨 위 `CONFIG`와 `STEPS`만 바꾼다.** 아래 공통 코드는 건드리지 않는다.
@@ -26,11 +38,12 @@ description: "Build, deploy, and update a Google Apps Script web app where parti
    - 결과 파일에 고정 표지(`[○○ 결과]`)·필수 항목·줄글 섹션·부록이 있는지 → `marker`, `requiredItems`, `PARSE.FREE_TEXT_SECTIONS`, `PARSE.STOP_AT`
    - 화면 문구: 제목, 브랜드, 파일을 부르는 말(질문지/과제), 문의 대상
    - 배포할 Google 계정, 참가자 제한 여부(시트 `참가자명단` 탭으로 운영)
+   - 날짜 폴더 뒤에 붙일 이름(`ROOT_FOLDER_NAME`, 예: `KOTRA 3일과정 질문지 웹앱`). 상위 폴더는 위 폴더 규칙을 따른다.
 2. **작업 폴더에 `assets/` 3개 복사 → `CONFIG`/`STEPS` 수정.** `key`는 영문, `short`는 시트 열 이름이 되므로 짧고 겹치지 않게.
 3. **점검**: `node scripts/check.mjs Code.gs` (오류 0이어야 함). 결과 양식 샘플이 있으면 `node scripts/check.mjs Code.gs <stepKey> sample.md`로 항목이 어떻게 나뉘는지, 검사 통과 여부를 본다. 나뉘는 모양이 이상하면 `PARSE` 옵션을 조정한다.
 4. **설치·배포**: `references/deploy-and-test.md`의 A/B/C 중 하나. `setup()` 실행 → 배포 파일 폴더에 파일 업로드 → `checkSetup()`으로 확인 → 웹앱 배포.
 5. **실제 주소에서 테스트** 이메일로 끝까지 진행(체크리스트) → 테스트 행·폴더만 정리.
-6. 사용자에게: 참가자 링크, 결과 시트·Drive 폴더 링크, 검사 수준, 참가자 제한 방법, 수정·재배포 방법을 알려 준다.
+6. 사용자에게: 참가자 링크, 날짜 폴더·결과 시트 링크, 검사 수준, 참가자 제한 방법, 수정·재배포 방법을 알려 준다.
 
 ## 수정 요청이 오면
 
