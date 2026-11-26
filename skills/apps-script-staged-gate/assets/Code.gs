@@ -6,6 +6,8 @@
  *
  * ▶ 바꾸는 곳은 맨 위 CONFIG 와 STEPS 두 블록뿐이다. 그 아래 코드는 손대지 않아도 된다.
  * ▶ 처음 한 번: setup() 실행 → 로그에 나온 "배포 파일 폴더"에 STEPS[].file 로 시작하는 파일 업로드 → 웹앱 배포
+ * ▶ 폴더 규칙: 모든 산출물(웹앱 스크립트, 결과 시트, 배포 파일, 참가자 결과)은
+ *   CONFIG.PARENT_FOLDER_ID 폴더 아래 'YYYY-MM-DD_<ROOT_FOLDER_NAME>' 폴더 하나에 모인다.
  */
 
 /* ═════════════════════════ 1. 기본 설정 ═════════════════════════ */
@@ -16,7 +18,9 @@ const CONFIG = {
   ITEM_NOUN: '질문지',                           // 내려받는 파일을 부르는 말 (예: 질문지, 과제, 워크시트)
   ADMIN_NOUN: '강사',                            // 문제가 생기면 알리라고 안내할 사람
 
-  ROOT_FOLDER_NAME: 'Staged Gate',               // setup()이 Drive에 만드는 폴더 이름
+  // 산출물을 모을 상위 폴더 ID (필수). 비우거나 열 수 없으면 setup()이 멈춘다(내 드라이브에 흩어지지 않게).
+  PARENT_FOLDER_ID: '1RJjj_dUbUSQXuETgA74ZZ1IA4SNX5vii',   // 메텔 Grill 교육 (공유 드라이브)
+  ROOT_FOLDER_NAME: 'Staged Gate',               // 날짜 뒤에 붙는 이름 → 'YYYY-MM-DD_Staged Gate' (예: 'KOTRA 3일과정 질문지 웹앱')
   SOURCE_FOLDER_NAME: '01_배포파일',
   RESULT_FOLDER_NAME: '02_참가자결과',
   SPREADSHEET_NAME: 'Staged Gate 결과',
@@ -277,7 +281,8 @@ function isFilled_(v) {
 /** 처음 한 번 실행: 폴더·시트를 만들고 ID를 저장한다. 다시 실행해도 안전하다(시트 열·서식만 맞춤). */
 function setup() {
   const props = PropertiesService.getScriptProperties();
-  const root = folderFromProp_(props, 'ROOT_FOLDER_ID') || DriveApp.createFolder(CONFIG.ROOT_FOLDER_NAME);
+  const savedRoot = folderFromProp_(props, 'ROOT_FOLDER_ID');
+  const root = savedRoot || datedRootFolder_();
   props.setProperty('ROOT_FOLDER_ID', root.getId());
   const src = folderFromProp_(props, 'SOURCE_FOLDER_ID') || subFolder_(root, CONFIG.SOURCE_FOLDER_NAME);
   props.setProperty('SOURCE_FOLDER_ID', src.getId());
@@ -290,9 +295,12 @@ function setup() {
   if (!ss) { try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { ss = null; } }
   if (!ss) {
     ss = SpreadsheetApp.create(CONFIG.SPREADSHEET_NAME);
-    DriveApp.getFileById(ss.getId()).moveTo(root);
   }
   props.setProperty('SHEET_ID', ss.getId());
+  if (!savedRoot) {                              // 처음 설치할 때만: 이미 운영 중인 앱의 파일 위치는 건드리지 않는다
+    moveIntoRoot_(ss.getId(), root);             // 결과 시트(시트에 붙은 스크립트면 그 시트)도 날짜 폴더로
+    moveIntoRoot_(scriptFileId_(), root);        // 단독 스크립트면 스크립트 파일도 날짜 폴더로
+  }
   ss.setSpreadsheetTimeZone(CONFIG.TZ);
   ensureSheets_(ss);
   return checkSetup();
@@ -304,7 +312,7 @@ function checkSetup() {
   const lines = [];
   try {
     const src = DriveApp.getFolderById(props.getProperty('SOURCE_FOLDER_ID'));
-    lines.push('루트 폴더: ' + DriveApp.getFolderById(props.getProperty('ROOT_FOLDER_ID')).getUrl());
+    lines.push('날짜 폴더(모든 산출물): ' + DriveApp.getFolderById(props.getProperty('ROOT_FOLDER_ID')).getUrl());
     lines.push('배포 파일 폴더(여기에 파일 업로드): ' + src.getUrl());
     lines.push('참가자 결과 폴더: ' + DriveApp.getFolderById(props.getProperty('RESULT_FOLDER_ID')).getUrl());
     lines.push('결과 시트: ' + SpreadsheetApp.openById(props.getProperty('SHEET_ID')).getUrl());
@@ -647,6 +655,40 @@ function folderFromProp_(props, key) {
     const f = DriveApp.getFolderById(id);
     return f.isTrashed() ? null : f;
   } catch (e) { return null; }
+}
+
+/** PARENT_FOLDER_ID 아래 'YYYY-MM-DD_<ROOT_FOLDER_NAME>' 폴더를 찾거나 만든다. 상위 폴더가 없으면 멈춘다. */
+function datedRootFolder_() {
+  const pid = String(CONFIG.PARENT_FOLDER_ID || '').trim();
+  if (!pid) throw new Error('CONFIG.PARENT_FOLDER_ID가 비어 있어요. 산출물을 모을 상위 폴더 ID를 넣어 주세요.');
+  let parent;
+  try { parent = DriveApp.getFolderById(pid); } catch (e) {
+    throw new Error('상위 폴더(CONFIG.PARENT_FOLDER_ID)를 열 수 없어요. 폴더 ID와 이 계정의 권한을 확인해 주세요. (' + e.message + ')');
+  }
+  const name = Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd') + '_' + CONFIG.ROOT_FOLDER_NAME;
+  return subFolder_(parent, name);
+}
+
+/** 단독 스크립트면 Drive 파일 ID, 시트에 붙은 스크립트면 '' */
+function scriptFileId_() {
+  try {
+    const id = ScriptApp.getScriptId();
+    const f = DriveApp.getFileById(id);
+    return f.getMimeType() === 'application/vnd.google-apps.script' ? id : '';
+  } catch (e) { return ''; }
+}
+
+/** 파일이 아직 날짜 폴더에 없으면 옮긴다. 실패해도 setup은 계속하고 로그만 남긴다. */
+function moveIntoRoot_(fileId, root) {
+  if (!fileId) return;
+  try {
+    const f = DriveApp.getFileById(fileId);
+    const parents = f.getParents();
+    while (parents.hasNext()) { if (parents.next().getId() === root.getId()) return; }
+    f.moveTo(root);
+  } catch (e) {
+    Logger.log('날짜 폴더로 옮기지 못했어요(' + fileId + '): ' + e.message + ' → Drive에서 직접 옮겨 주세요.');
+  }
 }
 
 function subFolder_(parent, name) {
