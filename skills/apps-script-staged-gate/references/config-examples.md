@@ -21,6 +21,7 @@ const CONFIG = {
   BRAND: 'Example Co.',
   ITEM_NOUN: '질문지',
   ADMIN_NOUN: '강사',
+  PARENT_FOLDER_ID: '<산출물을 모을 상위 폴더 ID>',   // 이 아래 'YYYY-MM-DD_영업 교육 질문지' 폴더가 생김
   ROOT_FOLDER_NAME: '영업 교육 질문지',
   SOURCE_FOLDER_NAME: '01_질문지원본',
   RESULT_FOLDER_NAME: '02_참가자결과',

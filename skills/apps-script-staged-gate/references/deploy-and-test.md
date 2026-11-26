@@ -1,8 +1,10 @@
 # 설치·배포·테스트·수정
 
+> 모든 산출물은 `CONFIG.PARENT_FOLDER_ID` 아래 `YYYY-MM-DD_<ROOT_FOLDER_NAME>` 폴더에 모인다. `setup()`이 날짜 폴더를 만들고 결과 시트와 스크립트(또는 스크립트가 붙은 시트)를 그 안으로 옮긴다. 상위 폴더를 열 수 없으면 `setup()`은 멈추고 아무것도 만들지 않는다.
+
 ## A. 손으로 설치 (누구나, 10분)
 
-1. Google Drive에서 새 Google 시트를 만든다.
+1. Google Drive에서 새 Google 시트를 만든다. (어디에 만들어도 `setup()`이 날짜 폴더로 옮긴다. `Code.gs`의 `PARENT_FOLDER_ID`를 먼저 확인한다.)
 2. 시트 메뉴 **확장 프로그램 > Apps Script**.
 3. `Code.gs` 내용을 지우고 수정한 `Code.gs`를 붙여 넣는다.
 4. 왼쪽 `+` > **HTML** → 이름 `Index`(확장자 없이) → `Index.html` 붙여 넣기.
@@ -31,8 +33,9 @@ clasp deploy --description "v1"               # 나온 deploymentId를 기록해
 
 ## C. AI 에이전트가 브라우저로 설치 (Aside 등)
 
-- **프로젝트 만들기**: Drive API `POST https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`
-  - 메타데이터: `{"name": "...", "mimeType": "application/vnd.google-apps.script"}`
+- **날짜 폴더 먼저**: `PARENT_FOLDER_ID` 아래에 `YYYY-MM-DD_<ROOT_FOLDER_NAME>` 폴더가 있는지 찾고, 없으면 만든다(`supportsAllDrives=true`). 이 폴더 이름은 `setup()`이 만드는 이름과 같아야 폴더가 둘로 갈리지 않는다.
+- **프로젝트 만들기**: Drive API `POST https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true`
+  - 메타데이터: `{"name": "...", "mimeType": "application/vnd.google-apps.script", "parents": ["<날짜 폴더 ID>"]}`
   - 본문 파트 `Content-Type: application/vnd.google-apps.script+json`: `{"files":[{"name":"Code","type":"server_js","source":"..."},{"name":"Index","type":"html","source":"..."},{"name":"appsscript","type":"json","source":"..."}]}`
   - `drive` 범위만 있어도 **생성은 된다.**
 - **코드 고치기**: 같은 API로 PATCH하면 `403 drive.scripts scope is required`. 편집기에서 바꾼다.
@@ -49,6 +52,7 @@ clasp deploy --description "v1"               # 나온 deploymentId를 기록해
 
 1. 이메일 입장 → 2단계 이후가 잠겨 있는지
 2. 1단계 다운로드 → 파일 이름·내용이 맞는지
+0. Drive에서 스크립트·결과 시트·`01_배포파일`·`02_참가자결과`가 모두 `<상위>/YYYY-MM-DD_<이름>/` 안에 있는지
 3. 1단계 업로드 → 다음 단계가 열리는지, 시트(진행현황·단계 결과·응답상세·활동로그)와 Drive(`02_참가자결과/<이메일>/`)에 들어갔는지
 4. CHECK가 marker/required면: 다른 단계 결과, 빈 양식을 올려 거절 문구가 나오는지
 5. 한글 txt: 메모장 ANSI(CP949) 저장 파일도 한글이 깨지지 않는지
@@ -76,4 +80,6 @@ clasp deploy --description "v1"               # 나온 deploymentId를 기록해
 | 긴 답이 잘림 | 셀 5만 자 제한 | 4.9만 자에서 자르고 원문은 Drive 파일에 |
 | 입장 칸에 남의 이메일이 미리 채워짐 | localStorage·자동완성 | 저장하지 않고 `autocomplete="off"` (이미 반영) |
 | 테스트 후 참가자 데이터를 지움 | 탭 전체 삭제 | 테스트 이메일 행만 지운다 |
+| setup()이 "상위 폴더를 열 수 없어요" | `PARENT_FOLDER_ID`가 틀렸거나 배포 계정에 폴더 권한 없음 | 폴더 ID 확인, 공유 드라이브면 배포 계정을 콘텐츠 관리자 이상으로 추가 |
+| 스크립트가 날짜 폴더로 안 옮겨짐 | 옮기기 권한 부족(로그에 "옮기지 못했어요") | Drive에서 직접 날짜 폴더로 옮긴다. 옮겨도 웹앱 주소는 그대로 |
 | 고친 코드를 올렸더니 다른 수정이 사라짐 | 배포본과 로컬이 달랐음 | 위 "운영 중 수정할 때" 1번 |
