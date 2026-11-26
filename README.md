@@ -30,11 +30,12 @@ skills/apps-script-staged-gate/
 - 어떤 파일이든 배포·업로드 (md, txt, pdf, 이미지…), 메모장 ANSI(CP949) txt 한글 자동 판별
 - Sheet: 진행현황(1인 1줄) · 단계별 결과(항목별 열, 자동 추가) · 응답상세(세로형) · 활동로그 · 참가자명단(채우면 명단 제한)
 - 배포 파일 교체는 Drive 폴더에 새 파일만 올리면 끝 (코드 재배포 불필요)
+- 산출물 한곳에 모으기: 웹앱 스크립트·결과 시트·배포 파일·참가자 결과를 `CONFIG.PARENT_FOLDER_ID` 폴더 아래 `YYYY-MM-DD_<이름>` 날짜 폴더 하나에 자동으로 모음 (상위 폴더를 못 열면 setup이 멈춰 내 드라이브에 흩어지지 않음)
 
 ## 바로 쓰기 (사람)
 
 1. Google 시트 → 확장 프로그램 > Apps Script
-2. `assets/Code.gs`, `assets/Index.html`(파일 이름 `Index`) 붙여 넣기 → `Code.gs` 맨 위 `CONFIG`, `STEPS` 수정
+2. `assets/Code.gs`, `assets/Index.html`(파일 이름 `Index`) 붙여 넣기 → `Code.gs` 맨 위 `CONFIG`, `STEPS` 수정 (`PARENT_FOLDER_ID`는 꼭 내 상위 폴더 ID로 바꾸기)
 3. `setup` 실행 → 로그에 나온 배포 파일 폴더에 파일 업로드
 4. 배포 > 새 배포 > 웹 앱 (실행: 나, 액세스: 모든 사용자)
 
